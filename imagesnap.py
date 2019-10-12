@@ -13,6 +13,7 @@ from AVFoundation import (AVCaptureDevice, AVCaptureDeviceInput,
                           AVMediaTypeVideo, AVVideoCodecJPEG)
 
 # TODO: Fix this bug: sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7fda6447a5b0 of type ^{opaqueCMSampleBuffer=}
+#   Start here: https://bitbucket.org/ronaldoussoren/pyobjc/issues/257/using-cmsamplebufferref-with
 # TODO: Fix bug with dispatch_async code requiring sleep(1)
 # TODO: AVCaptureDevices.devices deprecated in 10.15
 
