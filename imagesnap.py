@@ -214,7 +214,7 @@ class imageSnap:
         time.sleep(1)
         # 196
 
-    def _file_name_with_squence_number(self, seq):
+    def _file_name_with_sequence_number(self, seq):
         now = datetime.now()
         nowstr = now.strftime("%Y-%m-%d_%H-%M-%S")
         msecstr = "{:0>3d}".format(int(now.microsecond/1000))
@@ -249,6 +249,6 @@ if __name__ == "__main__":
     time.sleep(2)
     print("save_single")
     snap.save_single_snapshot(warmup=3)
-    print(snap._file_name_with_squence_number(42))
+    print(snap._file_name_with_sequence_number(42))
     del(snap)
         # snap._take_snapshot_with_filename("img.jpg")
