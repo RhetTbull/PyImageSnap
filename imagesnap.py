@@ -195,21 +195,24 @@ class imageSnap:
             #              dispatch_semaphore_signal(_semaphore);
             #  });
             def _write_to_file():
-                image_data.writeToFile_atomically_(filename, True)
+                retval = image_data.writeToFile_atomically_(filename, True)
                 libdispatch.dispatch_semaphore_signal(self._semaphore)
-
             libdispatch.dispatch_async(self._imageQueue, _write_to_file)
 
         return _handler
 
     def _take_snapshot_with_filename(self, filename):
         """ take a photo and save to filename """
+
+        # - (void)captureStillImageAsynchronouslyFromConnection:(AVCaptureConnection *)connection 
+        #                          completionHandler:(void (^)(CMSampleBufferRef imageDataSampleBuffer, NSError *error))handler;
+
         handler = self._create_connection_handler(filename)
         self._capture_still_image_output.captureStillImageAsynchronouslyFromConnection_completionHandler_(
             self._video_connection, handler
         )
 
-        # TODO: BUG: Not sure why this is needed but if we don't sleep, the dispatch_async code in handler never runs
+        #BUG: Not sure why this is needed but if we don't sleep, the dispatch_async code in handler never runs
         time.sleep(1)
 
     def _filename_with_sequence_number(self, seq):

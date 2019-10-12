@@ -52,6 +52,16 @@ optional arguments:
   -d D        Use named video device D
   ```
 
+## Known Issues
+
+Running this script will cause PyObjC bridge to print a warning to console that looks like:
+sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7f9c0aeca560 of type ^{opaqueCMSampleBuffer=}
+
+This is caused by the call to the AVFoundation method captureStillImageAsynchronouslyFromConnection 
+
+I'm still trying to figure out why this happens but the code works despite the warning.
+
+
 ## Authors
 
 * **Rhet Turnbull** - *Python implementation* - [PyImageSnap](https://github.com/RhetTbull/PyImageSnap)
