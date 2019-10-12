@@ -23,6 +23,33 @@ pip install pyobjc
 
 Currently, everything in imagesnap.py.  I may refactor this to a package.
 
+### Usage
+
+```python3 imagesnap.py -h```
+
+```usage: imagesnap.py [-h] [-v] [-l] [-t T] [-q] [-w W] [-d D] [FILE]
+usage: imagesnap.py [-h] [-v] [-l] [-t T] [-q] [-w W] [-d D] [FILE]
+
+USAGE: imagesnap [options] [filename]
+Version: 0.2.5
+Captures an image from a video device and saves it in a file.
+If no device is specified, the system default will be used.
+If no filename is specfied, snapshot.jpg will be used.
+JPEG is the only supported output type.
+
+positional arguments:
+  FILE
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -v          Verbose mode
+  -l          List available video devices
+  -t T        Take a picture every T seconds (min 1.0 seconds)
+  -q          Quiet mode. Do not output any text
+  -w W        Warmup. Delay snapshot W seconds after turning on camera
+  -d D        Use named video device D
+  ```
+
 ## Authors
 
 * **Rhet Turnbull** - *Python implementation* - [PyImageSnap](https://github.com/RhetTbull/PyImageSnap)

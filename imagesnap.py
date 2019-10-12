@@ -256,12 +256,13 @@ if __name__ == "__main__":
 
     def process_args():
         parser = argparse.ArgumentParser(
-            description="USAGE: imagesnap [options] [filename]"
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description="USAGE: imagesnap [options] [filename]\n"
             "Version: 0.2.5\n"
             "Captures an image from a video device and saves it in a file.\n"
             "If no device is specified, the system default will be used.\n"
             "If no filename is specfied, snapshot.jpg will be used.\n"
-            "JPEG is the only supported output type."
+            "JPEG is the only supported output type.",
         )
         parser.add_argument(
             "-v", action="store_true", default=False, help="Verbose mode"
