@@ -55,7 +55,8 @@ optional arguments:
 ## Known Issues
 
 Running this script will cause PyObjC bridge to print a warning to console that looks like:
-sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7f9c0aeca560 of type ^{opaqueCMSampleBuffer=}
+
+```sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7f9c0aeca560 of type ^{opaqueCMSampleBuffer=}```
 
 This is caused by the call to the AVFoundation method captureStillImageAsynchronouslyFromConnection 
 
