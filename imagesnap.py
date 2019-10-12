@@ -12,23 +12,12 @@ from AVFoundation import (AVCaptureDevice, AVCaptureDeviceInput,
                           AVCaptureStillImageOutput, AVMediaTypeMuxed,
                           AVMediaTypeVideo, AVVideoCodecJPEG)
 
-# Metadata_bundle = NSBundle.bundleWithIdentifier_("com.apple.AVFoundation")
-# objc.loadBundleVariables(Metadata_bundle, globals(), [('AVMediaTypeVideo', '@')])
+# TODO: AVCaptureDevices.devices deprecated in 10.15
 
-# AVCaptureDevices.devices deprecated in 10.15
-# devices = AVCaptureDevice.devices()
-# devices = [*AVCaptureDevice.devicesWithMediaType_(AVMediaTypeVideo), *AVCaptureDevice.devicesWithMediaType_(AVMediaTypeMuxed)]
-
-# print(f"Found {len(devices)} devices")
-# avc = AVCaptureDevice.alloc().init()
-# print(avc.availableStillImageFormats())
-# print(avc.deviceID())
-# avc.devicesWithMediaType_AVMediaTypeMuxed_()
-
-
+# Globals
 _VERBOSE = False
 
-
+# Utility functions
 def verbose(string):
     global _VERBOSE
     if _VERBOSE:
@@ -43,15 +32,14 @@ def generate_filename():
 
 class imageSnap:
     def __init__(self):
-        print(f"__init__")
         self._imageQueue = libdispatch.dispatch_queue_create(b"Image Queue", None)
         self._semaphore = libdispatch.dispatch_semaphore_create(0)
         self._capture_device_input = (
             self._capture_session
         ) = self._capture_still_image_output = None
         self._devices = self.video_devices()
-        print(self._imageQueue)
 
+    # Public interface
     @classmethod
     def video_devices(cls):
         """ return list of connected video devices """
@@ -63,13 +51,15 @@ class imageSnap:
 
     @classmethod
     def default_video_device(cls):
+        """ return default video device """
         device = AVCaptureDevice.defaultDeviceWithMediaType_(AVMediaTypeVideo)
         return device
 
     @classmethod
     def device_named(cls, name):
-        """ returns device with localizedName == name """
-        """ returns None if not found """
+        """ return device with localizedName == name """
+        """ return None if not found """
+        """ example: if name == "FaceTime HD Camera", returns the built in front-facing camera """
         devices = cls.video_devices()
         for dev in devices:
             if dev.localizedName() == name:
@@ -77,6 +67,17 @@ class imageSnap:
         return None
 
     def save_single_snapshot(self, device=None, path=None, warmup=0, timelapse=None):
+        """ take a photo and save it to file """
+        """ named after original function in imagesnap but is somewhat poorly named """
+        """ as if timelapse > 0, it will take multiple photos """
+        """ device: handle to device to use, as returned by video_devices() """
+        """ path: output path for the jpeg file """
+        """ warmup: number of seconds to warmup the camera before taking photo (float) """
+        """ timelapse: number of seconds to wait before taking multiple photos (float) """
+        """            if timelapse > 0, this function will run in infinite loop, taking a """
+        """            photo every timelapse seconds; image file names will be timestamped """
+        """            if timelapse > 0, path is ignored and timelapse images created in current working directory """
+
         if not device:
             device = self.default_video_device()
         if not path:
@@ -112,6 +113,7 @@ class imageSnap:
         self.stop_session()
 
     def setup_session_with_device(self, device):
+        """ setup the capture session for device """
         error = None
 
         # create the capture session
@@ -124,7 +126,6 @@ class imageSnap:
             device, objc.nil
         )  # returns array with AVCaptureDeviceInput object and what I assume is the error
 
-        print(self._capture_device_input)
         if not error and self._capture_session.canAddInput_(self._capture_device_input):
             self._capture_session.addInput_(self._capture_device_input)
 
@@ -147,11 +148,13 @@ class imageSnap:
                     break
             if self._video_connection:
                 break
-        print(f"connection: {self._video_connection}")
         if self._capture_session.canAddOutput_(self._capture_still_image_output):
             self._capture_session.addOutput_(self._capture_still_image_output)
 
     def stop_session(self):
+        """ tear down the capture session for device """
+        """ call this when done taking pictures to free the device for use by other processes """
+
         verbose("Stopping session...")
 
         # make sure we've stopped
@@ -174,21 +177,14 @@ class imageSnap:
                 self._capture_still_image_output = objc.nil
 
     def get_ready_to_take_picture(self):
+        """ start the capture session (turn on camera) """
+        """ call this after calling setup_session_with_device """
         self._capture_session.startRunning()
 
-    #     for (AVCaptureInputPort *port in [connection inputPorts]) {
-    #         if ([port.mediaType isEqual:AVMediaTypeVideo] ) {
-    #             self.videoConnection = connection;
-    #             break;
-    #         }
-    #     }
-    #     if (self.videoConnection) { break; }
-    # }
-
-    # Internal methods
+    # Private methods 
     def _create_connection_handler(self, filename):
+        """ create completion handler function to pass to _capture_still_image_output.captureStillImageAsynchronouslyFromConnection_completionHandler_ """
         def _handler(buffer, error):
-            print(f"_handler {filename}")
             image_data = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation_(
                 buffer
             )
@@ -197,27 +193,25 @@ class imageSnap:
             #              dispatch_semaphore_signal(_semaphore);
             #  });
             def _write_to_file():
-                print(f"_write_to_file")
                 image_data.writeToFile_atomically_(filename, True)
                 libdispatch.dispatch_semaphore_signal(self._semaphore)
 
-            print("calling dispatch_async")
             libdispatch.dispatch_async(self._imageQueue, _write_to_file)
 
         return _handler
 
     def _take_snapshot_with_filename(self, filename):
+        """ take a photo and save to filename """
         handler = self._create_connection_handler(filename)
-        print(f"connection: {self._video_connection}")
         self._capture_still_image_output.captureStillImageAsynchronouslyFromConnection_completionHandler_(
             self._video_connection, handler
         )
 
         # TODO: BUG: Not sure why this is needed but if we don't sleep, the dispatch_async code in handler never runs
         time.sleep(1)
-        # 196
 
     def _filename_with_sequence_number(self, seq):
+        """ create a filename if format snapshot-00001-YYYY-MM-ddd_HH-mm-ss.sss.jpg """
         now = datetime.now()
         nowstr = now.strftime("%Y-%m-%d_%H-%M-%S")
         msecstr = "{:0>3d}".format(int(now.microsecond / 1000))
@@ -227,7 +221,6 @@ class imageSnap:
         return filename
 
     def __del__(self):
-        print("Goodbye!")
         self.stop_session()
 
 
@@ -342,3 +335,4 @@ if __name__ == "__main__":
     snap.save_single_snapshot(
         device=device, path=filename, warmup=_args.w, timelapse=_args.t
     )
+    snap.stop_session()
