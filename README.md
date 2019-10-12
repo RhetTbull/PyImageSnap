@@ -65,5 +65,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-Thanks much to Robert Harder who built imagesnap and made it freely available to the Mac community.
-Thanks much to Ronald Oussoren who made it possible to use native Mac APIs directly in Python with PyObjC.
+* Thanks much to Robert Harder who built imagesnap and made it freely available to the Mac community.
+* Thanks much to Ronald Oussoren who made it possible to use native Mac APIs directly in Python with PyObjC.
