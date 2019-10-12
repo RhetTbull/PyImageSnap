@@ -15,10 +15,10 @@ from AVFoundation import (
     AVCaptureDeviceInput,
     AVVideoCodecJPEG,
 )
+from datetime import datetime
 
 _DEFAULT_FILENAME = "snapshot.jpg"
 
-# from Foundation import NSBundle
 
 # Metadata_bundle = NSBundle.bundleWithIdentifier_("com.apple.AVFoundation")
 # objc.loadBundleVariables(Metadata_bundle, globals(), [('AVMediaTypeVideo', '@')])
@@ -214,29 +214,41 @@ class imageSnap:
         time.sleep(1)
         # 196
 
+    def _file_name_with_squence_number(self, seq):
+        now = datetime.now()
+        nowstr = now.strftime("%Y-%m-%d_%H-%M-%S")
+        msecstr = "{:0>3d}".format(int(now.microsecond/1000))
+        nowstr = f"{nowstr}.{msecstr}"
+        seqstr = "{:0>5d}".format(seq)
+        filename = f"snapshot-{seqstr}-{nowstr}.jpg"
+        return filename
 
-snap = imageSnap()
-for dev in snap.video_devices():
-    print(f"id: {dev.deviceID()}")
-    print(f"id: {dev.availableStillImageFormats()}")
-    print(f"isInUse: {dev.isInUseByAnotherApplication()}")
-    print(f"mfg: {dev.manufacturer()}")
-    print(f"name: {dev.localizedName()}")
+    def __del__(self):
+        print("Goodbye!")
+        self.stop_session()
 
+if __name__ == "__main__":
+    snap = imageSnap()
+    for dev in snap.video_devices():
+        print(f"id: {dev.deviceID()}")
+        print(f"isInUse: {dev.isInUseByAnotherApplication()}")
+        print(f"mfg: {dev.manufacturer()}")
+        print(f"name: {dev.localizedName()}")
 
-default = snap.default_video_device()
-print(f"{default.localizedName()}")
+    default = snap.default_video_device()
+    print(f"{default.localizedName()}")
 
-device = snap.device_named("FaceTime HD Camera")
-print(f"device: {device.localizedName()}")
+    device = snap.device_named("FaceTime HD Camera")
+    print(f"device: {device.localizedName()}")
 
-print("setup_session")
-snap.setup_session_with_device(snap.default_video_device())
-time.sleep(2)
-print("ready")
-snap.get_ready_to_take_picture()
-time.sleep(2)
-print("save_single")
-snap.save_single_snapshot(path="img.jpg", warmup=3)
-
-# snap._take_snapshot_with_filename("img.jpg")
+    print("setup_session")
+    snap.setup_session_with_device(snap.default_video_device())
+    time.sleep(2)
+    print("ready")
+    snap.get_ready_to_take_picture()
+    time.sleep(2)
+    print("save_single")
+    snap.save_single_snapshot(warmup=3)
+    print(snap._file_name_with_squence_number(42))
+    del(snap)
+        # snap._take_snapshot_with_filename("img.jpg")
