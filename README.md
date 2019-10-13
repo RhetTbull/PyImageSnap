@@ -54,14 +54,7 @@ optional arguments:
 
 ## Known Issues
 
-Running this script will cause PyObjC bridge to print a warning to console that looks like:
-
-```sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7f9c0aeca560 of type ^{opaqueCMSampleBuffer=}```
-
-This is caused by the call to the AVFoundation method captureStillImageAsynchronouslyFromConnection 
-
-I'm still trying to figure out why this happens but the code works despite the warning.
-
+The minimum time between timelapse photos is 1.0 seconds.  This is a work-around to an issue with dispatch_async I've not yet solved.
 
 ## Authors
 

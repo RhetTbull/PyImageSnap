@@ -5,15 +5,20 @@ import sys
 import time
 from datetime import datetime
 
+import CoreMedia  # needed to prevent ObjCPointerWarning: PyObjCPointer created:...type ^{opaqueCMSampleBuffer=}.
 import libdispatch
 import objc
-from AVFoundation import (AVCaptureDevice, AVCaptureDeviceInput,
-                          AVCaptureSession, AVCaptureSessionPresetPhoto,
-                          AVCaptureStillImageOutput, AVMediaTypeMuxed,
-                          AVMediaTypeVideo, AVVideoCodecJPEG)
+from AVFoundation import (
+    AVCaptureDevice,
+    AVCaptureDeviceInput,
+    AVCaptureSession,
+    AVCaptureSessionPresetPhoto,
+    AVCaptureStillImageOutput,
+    AVMediaTypeMuxed,
+    AVMediaTypeVideo,
+    AVVideoCodecJPEG,
+)
 
-# TODO: Fix this bug: sys:1: ObjCPointerWarning: PyObjCPointer created: at 0x7fda6447a5b0 of type ^{opaqueCMSampleBuffer=}
-#   Start here: https://bitbucket.org/ronaldoussoren/pyobjc/issues/257/using-cmsamplebufferref-with
 # TODO: Fix bug with dispatch_async code requiring sleep(1)
 # TODO: AVCaptureDevices.devices deprecated in 10.15
 
@@ -140,19 +145,9 @@ class imageSnap:
         if self._capture_session.canAddOutput_(self._capture_still_image_output):
             self._capture_session.addOutput_(self._capture_still_image_output)
 
-        # for (AVCaptureConnection *connection in self.captureStillImageOutput.connections) {
-        self._video_connection = None
-        for connection in self._capture_still_image_output.connections():
-            for port in connection.inputPorts():
-                # todo: kludge because I can't figure out how to use isEqual:
-                # if ([port.mediaType isEqual:AVMediaTypeVideo] ) {
-                if AVMediaTypeVideo in str(port.mediaType):
-                    self._video_connection = connection
-                    break
-            if self._video_connection:
-                break
-        if self._capture_session.canAddOutput_(self._capture_still_image_output):
-            self._capture_session.addOutput_(self._capture_still_image_output)
+        self._video_connection = self._capture_still_image_output.connectionWithMediaType_(
+            AVMediaTypeVideo
+        )
 
     def stop_session(self):
         """ tear down the capture session for device """
@@ -184,9 +179,10 @@ class imageSnap:
         """ call this after calling setup_session_with_device """
         self._capture_session.startRunning()
 
-    # Private methods 
+    # Private methods
     def _create_connection_handler(self, filename):
         """ create completion handler function to pass to _capture_still_image_output.captureStillImageAsynchronouslyFromConnection_completionHandler_ """
+
         def _handler(buffer, error):
             image_data = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation_(
                 buffer
@@ -198,6 +194,7 @@ class imageSnap:
             def _write_to_file():
                 retval = image_data.writeToFile_atomically_(filename, True)
                 libdispatch.dispatch_semaphore_signal(self._semaphore)
+
             libdispatch.dispatch_async(self._imageQueue, _write_to_file)
 
         return _handler
@@ -205,15 +202,23 @@ class imageSnap:
     def _take_snapshot_with_filename(self, filename):
         """ take a photo and save to filename """
 
-        # - (void)captureStillImageAsynchronouslyFromConnection:(AVCaptureConnection *)connection 
+        # - (void)captureStillImageAsynchronouslyFromConnection:(AVCaptureConnection *)connection
         #                          completionHandler:(void (^)(CMSampleBufferRef imageDataSampleBuffer, NSError *error))handler;
 
-        handler = self._create_connection_handler(filename)
+        # capture_handle = self._create_connection_handler(filename)
+        # def capture_handle(buffer, err):
+        #     print("capture_handle")
+        #     image_data = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation_(
+        #         buffer
+        #     )
+        #     retval = image_data.writeToFile_atomically_(filename, True)
+
+        capture_handle = self._create_connection_handler(filename)
         self._capture_still_image_output.captureStillImageAsynchronouslyFromConnection_completionHandler_(
-            self._video_connection, handler
+            self._video_connection, capture_handle
         )
 
-        #BUG: Not sure why this is needed but if we don't sleep, the dispatch_async code in handler never runs
+        # BUG: Not sure why this is needed but if we don't sleep, the dispatch_async code in handler never runs
         time.sleep(1)
 
     def _filename_with_sequence_number(self, seq):
@@ -230,7 +235,7 @@ class imageSnap:
         self.stop_session()
 
 
-def test():
+def _test():
     snap = imageSnap()
     for dev in snap.video_devices():
         print(f"id: {dev.deviceID()}")
