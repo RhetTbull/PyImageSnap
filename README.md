@@ -19,7 +19,7 @@ Install [PyObjC](https://pypi.org/project/pyobjc/)
 pip install pyobjc
 ```
 
-Note: This uses Cocoa framework APIs that are deprecated in OS X 10.15+.  It may not run on Catalina or may complain loudly if it does run. I've only tested in on OS X 10.14.6 (Mojave).
+Note: This uses Cocoa framework APIs that are deprecated in OS X 10.15+. It seems to work fine on 10.15/Catalina but will almost certainly break in future OS versions.  
 
 ### Installing
 
